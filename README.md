@@ -21,6 +21,11 @@ writing back `[X]`, `[*X]`, or `[X*]` accordingly (matching the doc's
 existing legend). Already-marked items are shown as "(already logged)"
 and never re-prompted, so it's safe to run more than once a day.
 
+**Catch-up:** before asking about today, it also scans every earlier day
+header for unfinished (`[ ]`) items and walks through those first, oldest
+first, using the same prompt. `q`/`Q` at any point (catch-up or today)
+stops the whole run immediately, including skipping today's prompts.
+
 To test, log a past/future day, or backfill a day you forgot, override
 the date:
 
