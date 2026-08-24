@@ -73,11 +73,12 @@ log_day_block() {
       local desc="${line#\[ \] }"
       echo ""
       echo "$desc"
-      read -rp "Completed? [y]es on-time / [e]arly / [l]ate / [s]kip / [q]uit: " ans
+      read -rp "Completed? [y]es on-time / [e]arly / [l]ate / [n]ot completed / [s]kip / [q]uit: " ans
       case "$ans" in
         y|Y) LINES[$i]="[X] $desc"; changed=$((changed + 1)) ;;
         e|E) LINES[$i]="[*X] $desc"; changed=$((changed + 1)) ;;
         l|L) LINES[$i]="[X*] $desc"; changed=$((changed + 1)) ;;
+        n|N) LINES[$i]="[X!] $desc"; changed=$((changed + 1)) ;;
         q|Q) QUIT=1; break ;;
         *) ;;
       esac
