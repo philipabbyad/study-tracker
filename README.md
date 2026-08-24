@@ -14,11 +14,13 @@ the file, then walks through each unchecked `[ ]` item for that day and
 prompts:
 
 ```
-[y]es on-time / [e]arly / [l]ate / [s]kip / [q]uit
+[y]es on-time / [e]arly / [l]ate / [n]ot completed / [s]kip / [q]uit
 ```
 
-writing back `[X]`, `[*X]`, or `[X*]` accordingly (matching the doc's
-existing legend). Already-marked items are shown as "(already logged)"
+writing back `[X]`, `[*X]`, `[X*]`, or `[X!]` (did not complete)
+accordingly. `[X!]` is a deliberate "no" — it stops the item from being
+re-prompted, unlike `[s]kip` which leaves it open to ask again later.
+Already-marked items (including `[X!]`) are shown as "(already logged)"
 and never re-prompted, so it's safe to run more than once a day.
 
 **Catch-up:** before asking about today, it also scans every earlier day
