@@ -14,19 +14,19 @@ the file, then walks through each unchecked `[ ]` item for that day and
 prompts:
 
 ```
-[y]es on-time / [e]arly / [l]ate / [n]ot completed / [s]kip / [q]uit
+[y]es / [s]kip / [q]uit
 ```
 
-writing back `[X]`, `[*X]`, `[X*]`, or `[X!]` (did not complete)
-accordingly. `[X!]` is a deliberate "no" — it stops the item from being
-re-prompted, unlike `[s]kip` which leaves it open to ask again later.
-Already-marked items (including `[X!]`) are shown as "(already logged)"
-and never re-prompted, so it's safe to run more than once a day.
+writing back `[x] <item>` on yes. `[s]kip` leaves the item open to ask
+again later. Already-marked items are shown as "(already logged)" and
+never re-prompted, so it's safe to run more than once a day.
 
 **Catch-up:** before asking about today, it also scans every earlier day
 header for unfinished (`[ ]`) items and walks through those first, oldest
-first, using the same prompt. `q`/`Q` at any point (catch-up or today)
-stops the whole run immediately, including skipping today's prompts.
+first, using the same prompt — items completed here are written back as
+`[x] <item> — late`, since they're being logged after the day they were
+due. `q`/`Q` at any point (catch-up or today) stops the whole run
+immediately, including skipping today's prompts.
 
 To test, log a past/future day, or backfill a day you forgot, override
 the date:

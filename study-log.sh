@@ -65,6 +65,7 @@ print_unfinished_items() {
 
 log_day_block() {
   local idx=$1
+  local mode=$2  # "late" for catch-up items, "ontime" for today's items
   echo "== $(header_label "${LINES[$idx]}") =="
   local i=$((idx + 1))
   while [[ $i -lt ${#LINES[@]} && -n "${LINES[$i]}" ]]; do
@@ -73,12 +74,16 @@ log_day_block() {
       local desc="${line#\[ \] }"
       echo ""
       echo "$desc"
-      read -rp "Completed? [y]es on-time / [e]arly / [l]ate / [n]ot completed / [s]kip / [q]uit: " ans
+      read -rp "Completed? [y]es / [s]kip / [q]uit: " ans
       case "$ans" in
-        y|Y) LINES[$i]="[X] $desc"; changed=$((changed + 1)) ;;
-        e|E) LINES[$i]="[*X] $desc"; changed=$((changed + 1)) ;;
-        l|L) LINES[$i]="[X*] $desc"; changed=$((changed + 1)) ;;
-        n|N) LINES[$i]="[X!] $desc"; changed=$((changed + 1)) ;;
+        y|Y)
+          if [[ "$mode" == "late" ]]; then
+            LINES[$i]="[x] $desc — late"
+          else
+            LINES[$i]="[x] $desc"
+          fi
+          changed=$((changed + 1))
+          ;;
         q|Q) QUIT=1; break ;;
         *) ;;
       esac
@@ -115,7 +120,7 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   done
   echo ""
   for idx in "${missing[@]}"; do
-    log_day_block "$idx"
+    log_day_block "$idx" "late"
     if [[ $QUIT -eq 1 ]]; then
       break
     fi
@@ -136,7 +141,7 @@ if [[ $QUIT -eq 0 ]]; then
     exit 1
   fi
 
-  log_day_block "$header_idx"
+  log_day_block "$header_idx" "ontime"
 fi
 
 if [[ $changed -gt 0 ]]; then
