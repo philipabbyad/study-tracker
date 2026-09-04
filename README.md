@@ -10,6 +10,9 @@ the file just to see what's left.
 ./study-log.sh /path/to/schedule.txt
 ```
 
+Run `./study-log.sh --help` (or `-h`, with or without a file path) any
+time for a quick in-terminal summary of the flags below.
+
 With no flags, it's read-only: a status snapshot printed to the terminal.
 It never prompts and never writes to the file. It shows:
 
