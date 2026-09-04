@@ -1,6 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+print_help() {
+  cat <<'EOF'
+Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]
+
+Modes:
+  (no flags)            Read-only status snapshot: progress, pace
+                        (Behind/Ahead/On track), overdue, today, and
+                        next up.
+  --log                 Interactive mode: catch up on overdue days, log
+                        today, then offers to log ahead into upcoming
+                        days.
+  --date <M/D>          Snapshot a single day, e.g. --date "9/8".
+  --date <M/D> <M/D>    Snapshot an inclusive date range,
+                        e.g. --date "9/8" "9/12".
+  --date <N>            Snapshot the next N days starting today,
+                        e.g. --date 7.
+                        (--date cannot be combined with --log.)
+
+  -h, --help            Show this help and exit.
+
+See README.md for full details.
+EOF
+}
+
+for arg in "$@"; do
+  if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
+    print_help
+    exit 0
+  fi
+done
+
 FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]}"
 shift
 
