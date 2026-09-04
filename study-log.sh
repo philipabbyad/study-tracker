@@ -1,39 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--log [--date \"Mon 8/24\"]]}"
+FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]}"
 shift
 
 LOG_MODE=0
-DATE_OVERRIDE=""
+DATE_MODE=0
+DATE_ARG1=""
+DATE_ARG2=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --log) LOG_MODE=1; shift ;;
-    --date) DATE_OVERRIDE="${2:?--date requires an argument like '8/24' or 'Mon 8/24'}"; shift 2 ;;
+    --date)
+      DATE_MODE=1
+      DATE_ARG1="${2:?--date requires a date (e.g. 9/8), two dates for a range (e.g. 9/8 9/12), or a number of days (e.g. 7)}"
+      if [[ "$DATE_ARG1" =~ ^[0-9]{1,2}/[0-9]{1,2}$ && -n "${3:-}" && "$3" =~ ^[0-9]{1,2}/[0-9]{1,2}$ ]]; then
+        DATE_ARG2="$3"
+        shift 3
+      else
+        shift 2
+      fi
+      ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
-if [[ -n "$DATE_OVERRIDE" && $LOG_MODE -eq 0 ]]; then
-  echo "--date requires --log" >&2
+if [[ $DATE_MODE -eq 1 && $LOG_MODE -eq 1 ]]; then
+  echo "--date cannot be combined with --log" >&2
   exit 1
 fi
 
 YEAR=$(date +%Y)
 DAY_HEADER_RE='^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ([0-9]{1,2})/([0-9]{1,2})'
 
-if [[ -n "$DATE_OVERRIDE" ]]; then
-  if [[ "$DATE_OVERRIDE" =~ ^([0-9]{1,2})/([0-9]{1,2})$ ]]; then
-    WEEKDAY=$(date -d "$YEAR-${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" +%a)
-    TODAY_PATTERN="$WEEKDAY $DATE_OVERRIDE"
-  else
-    TODAY_PATTERN="$DATE_OVERRIDE"
-  fi
-else
-  WEEKDAY=$(date +%a)
-  MONTHDAY=$(date +%-m/%-d)
-  TODAY_PATTERN="$WEEKDAY $MONTHDAY"
-fi
+WEEKDAY=$(date +%a)
+MONTHDAY=$(date +%-m/%-d)
+TODAY_PATTERN="$WEEKDAY $MONTHDAY"
 
 mapfile -t LINES < "$FILE"
 
@@ -44,6 +46,13 @@ header_epoch() {
   local line="$1"
   if [[ "$line" =~ $DAY_HEADER_RE ]]; then
     date -d "$YEAR-${BASH_REMATCH[2]}-${BASH_REMATCH[3]}" +%s
+  fi
+}
+
+date_str_epoch() {
+  local mmdd="$1"
+  if [[ "$mmdd" =~ ^([0-9]{1,2})/([0-9]{1,2})$ ]]; then
+    date -d "$YEAR-${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" +%s
   fi
 }
 
@@ -206,7 +215,7 @@ if [[ $LOG_MODE -eq 1 ]]; then
       echo "$(header_label "${LINES[$header_idx]}") — already fully logged."
     fi
 
-    if [[ $QUIT -eq 0 && -z "$DATE_OVERRIDE" ]]; then
+    if [[ $QUIT -eq 0 ]]; then
       build_upcoming
       if [[ ${#upcoming[@]} -gt 0 ]]; then
         walk_upcoming
@@ -226,6 +235,33 @@ if [[ $LOG_MODE -eq 1 ]]; then
     echo "Saved $changed update(s) to $FILE"
   else
     echo "No changes made."
+  fi
+elif [[ $DATE_MODE -eq 1 ]]; then
+  if [[ "$DATE_ARG1" =~ ^[0-9]+$ ]]; then
+    range_start=$TODAY_EPOCH
+    range_end=$((TODAY_EPOCH + (DATE_ARG1 - 1) * 86400))
+    range_label="the next $DATE_ARG1 day(s)"
+  else
+    range_start=$(date_str_epoch "$DATE_ARG1")
+    range_end=$(date_str_epoch "${DATE_ARG2:-$DATE_ARG1}")
+    if [[ $range_start -gt $range_end ]]; then
+      range_tmp=$range_start; range_start=$range_end; range_end=$range_tmp
+    fi
+    range_label="$DATE_ARG1${DATE_ARG2:+ – $DATE_ARG2}"
+  fi
+
+  found=0
+  for idx in "${day_indices[@]}"; do
+    epoch=$(header_epoch "${LINES[$idx]}")
+    if [[ -n "$epoch" && "$epoch" -ge "$range_start" && "$epoch" -le "$range_end" ]]; then
+      echo "$(header_label "${LINES[$idx]}")"
+      print_day_items "$idx"
+      echo ""
+      found=1
+    fi
+  done
+  if [[ $found -eq 0 ]]; then
+    echo "No entries for $range_label."
   fi
 else
   completed=0
