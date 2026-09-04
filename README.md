@@ -17,16 +17,20 @@ prompts:
 [y]es / [s]kip / [q]uit
 ```
 
-writing back `[x] <item>` on yes. `[s]kip` leaves the item open to ask
-again later. Already-marked items are shown as "(already logged)" and
-never re-prompted, so it's safe to run more than once a day.
+writing back `[x] <item> — completed on-time` on yes. `[s]kip` leaves the
+item open to ask again later. Already-marked items are shown as "(already
+logged)" and never re-prompted, so it's safe to run more than once a day.
 
 **Catch-up:** before asking about today, it also scans every earlier day
 header for unfinished (`[ ]`) items and walks through those first, oldest
 first, using the same prompt — items completed here are written back as
-`[x] <item> — late`, since they're being logged after the day they were
-due. `q`/`Q` at any point (catch-up or today) stops the whole run
+`[x] <item> — completed late`, since they're being logged after the day
+they were due. `q`/`Q` at any point (catch-up or today) stops the whole run
 immediately, including skipping today's prompts.
+
+If the schedule file has a header line starting with `Last updated:`, it's
+automatically rewritten to today's actual date whenever a run saves any
+changes — no manual upkeep needed to keep that line trustworthy.
 
 To test, log a past/future day, or backfill a day you forgot, override
 the date:
@@ -55,7 +59,8 @@ it asks `Continue to <next day>? [y/n]` before showing the next day's items,
 so you can stop at a clean day boundary once you've caught up to wherever
 you actually left off reading. `q`/`Q` during an item still stops
 immediately, same as elsewhere. Completions are written back as
-`[x] <item> — early`, so you can tell at a glance (and later, when judging
-how well you planned your pace) which items were done ahead of schedule.
+`[x] <item> — completed early`, so you can tell at a glance (and later, when
+judging how well you planned your pace) which items were done ahead of
+schedule.
 `--early` is a standalone mode — it doesn't touch today's or catch-up's
 unfinished items, and doesn't combine with `--date`.
