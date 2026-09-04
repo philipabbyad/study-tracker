@@ -86,11 +86,11 @@ log_day_block() {
       case "$ans" in
         y|Y)
           if [[ "$mode" == "late" ]]; then
-            LINES[$i]="[x] $desc — late"
+            LINES[$i]="[x] $desc — completed late"
           elif [[ "$mode" == "early" ]]; then
-            LINES[$i]="[x] $desc — early"
+            LINES[$i]="[x] $desc — completed early"
           else
-            LINES[$i]="[x] $desc"
+            LINES[$i]="[x] $desc — completed on-time"
           fi
           changed=$((changed + 1))
           ;;
@@ -187,6 +187,12 @@ else
 fi
 
 if [[ $changed -gt 0 ]]; then
+  for i in "${!LINES[@]}"; do
+    if [[ "${LINES[$i]}" == "Last updated:"* ]]; then
+      LINES[$i]="Last updated: $(date +%-m/%-d/%Y)"
+      break
+    fi
+  done
   printf '%s\n' "${LINES[@]}" > "$FILE.tmp"
   mv "$FILE.tmp" "$FILE"
   echo "Saved $changed update(s) to $FILE"
