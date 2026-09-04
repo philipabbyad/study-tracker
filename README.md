@@ -33,6 +33,25 @@ It never prompts and never writes to the file. It shows:
   you've already knocked out a few of that day's items ahead of time),
   or "Nothing upcoming."
 
+### `--date`: peek at a specific day or range
+
+To check a day or span of days directly, without scrolling through the
+Progress/Overdue/Today/Next-up snapshot, pass `--date`. It takes one of
+three forms (plain `M/D`, no weekday prefix):
+
+```
+./study-log.sh /path/to/schedule.txt --date "9/8"          # just that day
+./study-log.sh /path/to/schedule.txt --date "9/8" "9/12"   # that date range, inclusive
+./study-log.sh /path/to/schedule.txt --date 7               # next 7 days, starting today
+```
+
+Each matching day header prints in full (done and open items both, same
+as the other snapshot sections), in file order. There's no Progress/pace
+line here — it's just a focused listing of the day(s) you asked for. If
+nothing in the schedule falls in that date or range, it says so instead
+of printing nothing. `--date` is snapshot-only: combining it with `--log`
+is an error.
+
 ## Logging progress: `--log`
 
 ```
@@ -80,23 +99,3 @@ same as elsewhere. Completions are written back as
 `[x] <item> — completed early`, so you can tell at a glance (and later,
 when judging how well you planned your pace) which items were done ahead
 of schedule.
-
-### `--date`: backfill a specific day
-
-`--date` overrides which day header `--log` treats as "today," so you
-can log or backfill a day other than the real current date — useful for
-testing, or catching up a day you forgot about days later:
-
-```
-./study-log.sh /path/to/schedule.txt --log --date "Mon 8/24"
-```
-
-**`--date` always requires `--log`** — it's a modifier on `--log`, not a
-mode of its own. Running `--date` by itself (no `--log`) is an error;
-there's no read-only snapshot for an arbitrary date, only for today.
-
-`--date` also accepts just the month/day (`--date "8/24"`) — the script
-looks up which weekday that is in the schedule's year and matches on
-that. With `--date`, `--log` logs *only* that one header: no catch-up
-scan for other overdue days, and no logging-ahead walk into upcoming days
-afterward — it's a narrowly-scoped, single-day operation.
