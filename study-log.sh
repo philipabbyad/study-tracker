@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--date \"Mon 8/24\"|--early]}"
+FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--date \"Mon 8/24\"]}"
 
 DATE_OVERRIDE=""
-EARLY_MODE=0
 if [[ "${2:-}" == "--date" ]]; then
   DATE_OVERRIDE="${3:?--date requires an argument like '8/24' or 'Mon 8/24'}"
-elif [[ "${2:-}" == "--early" ]]; then
-  EARLY_MODE=1
 fi
 
 YEAR=$(date +%Y)
@@ -105,6 +102,36 @@ log_day_block() {
   echo ""
 }
 
+build_upcoming() {
+  upcoming=()
+  for idx in "${day_indices[@]}"; do
+    epoch=$(header_epoch "${LINES[$idx]}")
+    if [[ -n "$epoch" && "$epoch" -gt "$TODAY_EPOCH" ]] && day_has_unfinished "$idx"; then
+      upcoming+=("$idx")
+    fi
+  done
+}
+
+walk_upcoming() {
+  local first=1
+  for idx in "${upcoming[@]}"; do
+    if [[ $first -eq 0 ]]; then
+      read -rp "Continue to $(header_label "${LINES[$idx]}")? [y/n]: " cont
+      if [[ "$cont" != "y" && "$cont" != "Y" ]]; then
+        break
+      fi
+    fi
+    first=0
+    echo "  $(header_label "${LINES[$idx]}")"
+    print_unfinished_items "$idx"
+    echo ""
+    log_day_block "$idx" "early"
+    if [[ $QUIT -eq 1 ]]; then
+      break
+    fi
+  done
+}
+
 TODAY_EPOCH=$(header_epoch "$TODAY_PATTERN")
 
 day_indices=()
@@ -114,75 +141,54 @@ for i in "${!LINES[@]}"; do
   fi
 done
 
-if [[ $EARLY_MODE -eq 1 ]]; then
-  upcoming=()
-  for idx in "${day_indices[@]}"; do
-    epoch=$(header_epoch "${LINES[$idx]}")
-    if [[ -n "$epoch" && "$epoch" -gt "$TODAY_EPOCH" ]] && day_has_unfinished "$idx"; then
-      upcoming+=("$idx")
+missing=()
+for idx in "${day_indices[@]}"; do
+  epoch=$(header_epoch "${LINES[$idx]}")
+  if [[ -n "$epoch" && "$epoch" -lt "$TODAY_EPOCH" ]] && day_has_unfinished "$idx"; then
+    missing+=("$idx")
+  fi
+done
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "You have ${#missing[@]} day(s) with unfinished items:"
+  for idx in "${missing[@]}"; do
+    echo "  $(header_label "${LINES[$idx]}")"
+    print_unfinished_items "$idx"
+  done
+  echo ""
+  for idx in "${missing[@]}"; do
+    log_day_block "$idx" "late"
+    if [[ $QUIT -eq 1 ]]; then
+      break
+    fi
+  done
+fi
+
+if [[ $QUIT -eq 0 ]]; then
+  header_idx=-1
+  for i in "${!LINES[@]}"; do
+    if [[ "${LINES[$i]}" == "$TODAY_PATTERN"* ]]; then
+      header_idx=$i
+      break
     fi
   done
 
-  if [[ ${#upcoming[@]} -eq 0 ]]; then
-    echo "No upcoming unfinished items to log early."
-  else
-    first=1
-    for idx in "${upcoming[@]}"; do
-      if [[ $first -eq 0 ]]; then
-        read -rp "Continue to $(header_label "${LINES[$idx]}")? [y/n]: " cont
-        if [[ "$cont" != "y" && "$cont" != "Y" ]]; then
-          break
-        fi
-      fi
-      first=0
-      echo "  $(header_label "${LINES[$idx]}")"
-      print_unfinished_items "$idx"
-      echo ""
-      log_day_block "$idx" "early"
-      if [[ $QUIT -eq 1 ]]; then
-        break
-      fi
-    done
-  fi
-else
-  missing=()
-  for idx in "${day_indices[@]}"; do
-    epoch=$(header_epoch "${LINES[$idx]}")
-    if [[ -n "$epoch" && "$epoch" -lt "$TODAY_EPOCH" ]] && day_has_unfinished "$idx"; then
-      missing+=("$idx")
-    fi
-  done
-
-  if [[ ${#missing[@]} -gt 0 ]]; then
-    echo "You have ${#missing[@]} day(s) with unfinished items:"
-    for idx in "${missing[@]}"; do
-      echo "  $(header_label "${LINES[$idx]}")"
-      print_unfinished_items "$idx"
-    done
-    echo ""
-    for idx in "${missing[@]}"; do
-      log_day_block "$idx" "late"
-      if [[ $QUIT -eq 1 ]]; then
-        break
-      fi
-    done
+  if [[ $header_idx -eq -1 ]]; then
+    echo "No entry found for '$TODAY_PATTERN' in $FILE."
+    exit 1
   fi
 
-  if [[ $QUIT -eq 0 ]]; then
-    header_idx=-1
-    for i in "${!LINES[@]}"; do
-      if [[ "${LINES[$i]}" == "$TODAY_PATTERN"* ]]; then
-        header_idx=$i
-        break
-      fi
-    done
-
-    if [[ $header_idx -eq -1 ]]; then
-      echo "No entry found for '$TODAY_PATTERN' in $FILE."
-      exit 1
-    fi
-
+  if day_has_unfinished "$header_idx"; then
     log_day_block "$header_idx" "ontime"
+  else
+    echo "$(header_label "${LINES[$header_idx]}") — already fully logged."
+  fi
+
+  if [[ $QUIT -eq 0 && -z "$DATE_OVERRIDE" ]]; then
+    build_upcoming
+    if [[ ${#upcoming[@]} -gt 0 ]]; then
+      walk_upcoming
+    fi
   fi
 fi
 
