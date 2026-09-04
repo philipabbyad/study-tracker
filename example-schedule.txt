@@ -1,0 +1,13 @@
+Last updated: 1/5/2026
+
+NOTATION
+[x] = done          [ ] = not done yet
+"— completed on-time" / "— completed late" / "— completed early"
+
+Mon 1/5
+[x] Read chapter intro — completed on-time
+[x] Chapter quiz — completed late
+
+Tue 1/6
+[ ] Practice problems (deep dive)
+[ ] Chapter review (skim)
