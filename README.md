@@ -20,23 +20,23 @@ format (day headers, `[x]`/`[ ]` items, completion suffixes, and the
 With no flags, it's read-only: a status snapshot printed to the terminal.
 It never prompts and never writes to the file. It shows:
 
-- **Progress** — `X of Y days completed (Z remaining)`, plus a pace label:
+- **Progress**: `X of Y days completed (Z remaining)`, plus a pace label:
   `Behind by N day(s)` if any past day still has unfinished items
   (a partially-done overdue day counts the same as a fully untouched
-  one — each is one day behind); otherwise `Ahead by N day(s)` if
+  one, each is one day behind); otherwise `Ahead by N day(s)` if
   one or more *future* days are fully checked off, or just `Ahead` (no
   count) if a future day has some but not all items done; otherwise
   `On track`.
-- **Overdue** (only if any past day still has unfinished `[ ]` items) — a
-  count plus the full day (every item, done and open both — not just
+- **Overdue** (only if any past day still has unfinished `[ ]` items): a
+  count plus the full day (every item, done and open both, not just
   what's left) for just the single oldest overdue day, to avoid a wall
   of text if you've fallen far behind.
-- **Today** — today's date header (matching `Weekday M/D`, e.g.
+- **Today**: today's date header (matching `Weekday M/D`, e.g.
   `Mon 8/24`) with the full day's items (done and open both), or
   "already fully logged" if nothing's left, or "No entry for `<today>`"
   if the schedule has no header for today at all.
-- **Next up** — the single nearest upcoming day that still has unfinished
-  items, with its full item list (done and open both — handy when
+- **Next up**: the single nearest upcoming day that still has unfinished
+  items, with its full item list (done and open both, handy when
   you've already knocked out a few of that day's items ahead of time),
   or "Nothing upcoming."
 
@@ -54,7 +54,7 @@ three forms (plain `M/D`, no weekday prefix):
 
 Each matching day header prints in full (done and open items both, same
 as the other snapshot sections), in file order. There's no Progress/pace
-line here — it's just a focused listing of the day(s) you asked for. If
+line here; it's just a focused listing of the day(s) you asked for. If
 nothing in the schedule falls in that date or range, it says so instead
 of printing nothing. `--date` is snapshot-only: combining it with `--log`
 is an error.
@@ -79,7 +79,7 @@ logged)" and never re-prompted, so it's safe to run more than once a day.
 **Catch-up:** before asking about today, it also scans every earlier day
 header for unfinished (`[ ]`) items and walks through those first, oldest
 first, using the same prompt. Each overdue day is previewed with its full
-item list (done and open both) before you're walked through it — items
+item list (done and open both) before you're walked through it; items
 completed here are written back as `[x] <item> — completed late`, since
 they're being logged after the day they were due. `q`/`Q` at any point
 (catch-up or today) stops the whole run immediately, including skipping
@@ -87,13 +87,13 @@ today's prompts.
 
 If the schedule file has a header line starting with `Last updated:`, it's
 automatically rewritten to today's actual date whenever a run saves any
-changes — no manual upkeep needed to keep that line trustworthy.
+changes, no manual upkeep needed to keep that line trustworthy.
 
-**Logging ahead:** once today's entry has been handled — whether you
-logged items, skipped them, or it was already fully checked off — the
+**Logging ahead:** once today's entry has been handled (whether you
+logged items, skipped them, or it was already fully checked off), the
 script checks for unfinished (`[ ]`) items on any day *after* today. If
 there are none, it ends quietly. If there are, it walks through them one
-day at a time, oldest first, rather than dumping the whole list up front —
+day at a time, oldest first, rather than dumping the whole list up front:
 useful on a schedule with weeks or months of upcoming days. It shows the
 next upcoming day's full item list (done and open both, so you can see
 what you've already gotten ahead on) and prompts through the remaining
@@ -111,7 +111,7 @@ of schedule.
 
 Whenever a `--log` run actually saves changes, it also renders the
 schedule to a small static HTML page and pushes it to a separate site
-repo — no extra step required. This is how a mentor or anyone else can
+repo, no extra step required. This is how a mentor or anyone else can
 check progress via a link instead of being sent the file directly.
 
 Configure it in `~/.study-trackerrc` (sourced automatically if present):
@@ -124,13 +124,13 @@ STUDY_TRACKER_COURSE_LABEL="Computer Architecture"   # optional subtitle on the 
 `STUDY_TRACKER_SITE_DIR` must be a git repo that already deploys on push
 (e.g. GitHub Pages, or any host wired to auto-deploy that repo's `main`
 branch). The page is written to `study-tracker/index.html` inside it and
-committed/pushed automatically — nothing is added to that repo's own nav
+committed/pushed automatically; nothing is added to that repo's own nav
 or home page, so the resulting URL (e.g.
 `https://philipabbyad.com/study-tracker`) is link-only: reachable if you
 share it, not otherwise discoverable. `STUDY_TRACKER_COURSE_LABEL` is
 optional; leave it unset for a plain "Study Tracker" title.
 
 If publishing fails for any reason (not a git repo, offline, push
-rejected), it prints a warning and moves on — your local schedule save
+rejected), it prints a warning and moves on: your local schedule save
 already succeeded and is never rolled back or blocked by a publish
 failure.
