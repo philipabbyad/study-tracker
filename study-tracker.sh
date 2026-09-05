@@ -225,8 +225,6 @@ render_schedule_html() {
     --color-accent: #5f9ea0;
     --color-open: #666666;
     --color-done: #7fbf7f;
-    --color-ontime: #7fbf7f;
-    --color-early: #5f9ea0;
     --color-late: #d9a441;
     --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
     --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -236,6 +234,7 @@ render_schedule_html() {
   body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); padding: 1.5rem; line-height: 1.6; }
   main { max-width: var(--max-width); margin: 0 auto; }
   h1 { font-family: var(--font-mono); font-size: 1.5rem; margin-bottom: 0.25rem; }
+  p.course { color: var(--color-text-dim); font-size: 1rem; margin-bottom: 0.35rem; }
   p.meta { color: var(--color-text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
   .day { margin-bottom: 1.75rem; }
   .day-header { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem;
@@ -243,8 +242,6 @@ render_schedule_html() {
   .item { font-family: var(--font-mono); font-size: 0.95rem; padding: 0.15rem 0; }
   .item-open   { color: var(--color-open); }
   .item-done   { color: var(--color-done); }
-  .item-ontime { color: var(--color-ontime); }
-  .item-early  { color: var(--color-early); }
   .item-late   { color: var(--color-late); }
   footer { margin-top: 2rem; color: var(--color-text-dim); font-size: 0.8rem; }
   a { color: var(--color-accent); }
@@ -253,8 +250,12 @@ render_schedule_html() {
 <body>
 <main>
   <h1>Study Tracker</h1>
-  <p class="meta">Last updated: $(date '+%Y-%m-%d %H:%M %Z')</p>
 HTML_HEAD
+
+  if [[ -n "${STUDY_TRACKER_COURSE_LABEL:-}" ]]; then
+    echo "  <p class=\"course\">$(html_escape "$STUDY_TRACKER_COURSE_LABEL")</p>"
+  fi
+  echo "  <p class=\"meta\">Last updated: $(date '+%Y-%m-%d')</p>"
 
   local line day_open=0 state desc class
   for line in "${LINES[@]}"; do
@@ -278,9 +279,7 @@ HTML_HEAD
         class=item-open
       else
         case "$desc" in
-          *"— completed on-time") class=item-ontime ;;
           *"— completed late") class=item-late ;;
-          *"— completed early") class=item-early ;;
           *) class=item-done ;;
         esac
       fi
@@ -292,7 +291,7 @@ HTML_HEAD
   [[ $day_open -eq 1 ]] && echo "  </div>"
 
   cat <<'HTML_FOOT'
-  <footer>Generated automatically by study-log.sh</footer>
+  <footer>Generated automatically by <a href="https://github.com/philipabbyad/study-tracker">study-tracker.sh</a></footer>
 </main>
 </body>
 </html>
