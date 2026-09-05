@@ -255,7 +255,7 @@ HTML_HEAD
   if [[ -n "${STUDY_TRACKER_COURSE_LABEL:-}" ]]; then
     echo "  <p class=\"course\">$(html_escape "$STUDY_TRACKER_COURSE_LABEL")</p>"
   fi
-  echo "  <p class=\"meta\">Last updated: $(date '+%Y-%m-%d')</p>"
+  echo "  <p class=\"meta\">Last updated: $(date '+%-m/%-d/%Y')</p>"
 
   local line day_open=0 state desc class
   for line in "${LINES[@]}"; do
