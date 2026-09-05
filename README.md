@@ -7,10 +7,10 @@ the file just to see what's left.
 ## Usage
 
 ```
-./study-log.sh /path/to/schedule.txt
+./study-tracker.sh /path/to/schedule.txt
 ```
 
-Run `./study-log.sh --help` (or `-h`, with or without a file path) any
+Run `./study-tracker.sh --help` (or `-h`, with or without a file path) any
 time for a quick in-terminal summary of the flags below.
 
 See `example-schedule.txt` for a minimal example of the expected file
@@ -47,9 +47,9 @@ Progress/Overdue/Today/Next-up snapshot, pass `--date`. It takes one of
 three forms (plain `M/D`, no weekday prefix):
 
 ```
-./study-log.sh /path/to/schedule.txt --date "9/8"          # just that day
-./study-log.sh /path/to/schedule.txt --date "9/8" "9/12"   # that date range, inclusive
-./study-log.sh /path/to/schedule.txt --date 7               # next 7 days, starting today
+./study-tracker.sh /path/to/schedule.txt --date "9/8"          # just that day
+./study-tracker.sh /path/to/schedule.txt --date "9/8" "9/12"   # that date range, inclusive
+./study-tracker.sh /path/to/schedule.txt --date 7               # next 7 days, starting today
 ```
 
 Each matching day header prints in full (done and open items both, same
@@ -62,7 +62,7 @@ is an error.
 ## Logging progress: `--log`
 
 ```
-./study-log.sh /path/to/schedule.txt --log
+./study-tracker.sh /path/to/schedule.txt --log
 ```
 
 `--log` is the interactive, write-enabled mode. It walks through each
@@ -106,3 +106,31 @@ same as elsewhere. Completions are written back as
 `[x] <item> — completed early`, so you can tell at a glance (and later,
 when judging how well you planned your pace) which items were done ahead
 of schedule.
+
+## Publishing a shareable snapshot
+
+Whenever a `--log` run actually saves changes, it also renders the
+schedule to a small static HTML page and pushes it to a separate site
+repo — no extra step required. This is how a mentor or anyone else can
+check progress via a link instead of being sent the file directly.
+
+Configure it in `~/.study-trackerrc` (sourced automatically if present):
+
+```bash
+STUDY_TRACKER_SITE_DIR="$HOME/personal-website"      # git repo to publish into (default shown)
+STUDY_TRACKER_COURSE_LABEL="Computer Architecture"   # optional subtitle on the page
+```
+
+`STUDY_TRACKER_SITE_DIR` must be a git repo that already deploys on push
+(e.g. GitHub Pages, or any host wired to auto-deploy that repo's `main`
+branch). The page is written to `study-tracker/index.html` inside it and
+committed/pushed automatically — nothing is added to that repo's own nav
+or home page, so the resulting URL (e.g.
+`https://philipabbyad.com/study-tracker`) is link-only: reachable if you
+share it, not otherwise discoverable. `STUDY_TRACKER_COURSE_LABEL` is
+optional; leave it unset for a plain "Study Tracker" title.
+
+If publishing fails for any reason (not a git repo, offline, push
+rejected), it prints a warning and moves on — your local schedule save
+already succeeded and is never rolled back or blocked by a publish
+failure.
