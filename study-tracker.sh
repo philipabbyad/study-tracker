@@ -9,7 +9,7 @@ fi
 
 print_help() {
   cat <<'EOF'
-Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]
+Usage: study-tracker.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]
 
 Modes:
   (no flags)            Read-only status snapshot: progress, pace
@@ -38,7 +38,7 @@ for arg in "$@"; do
   fi
 done
 
-FILE="${1:?Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]}"
+FILE="${1:?Usage: study-tracker.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]}"
 shift
 
 LOG_MODE=0
