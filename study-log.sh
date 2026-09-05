@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+STUDY_TRACKER_CONFIG="${STUDY_TRACKER_CONFIG:-$HOME/.study-trackerrc}"
+if [[ -f "$STUDY_TRACKER_CONFIG" ]]; then
+  # shellcheck disable=SC1090
+  source "$STUDY_TRACKER_CONFIG"
+fi
+
 print_help() {
   cat <<'EOF'
 Usage: study-log.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]
@@ -193,6 +199,141 @@ walk_upcoming() {
   done
 }
 
+html_escape() {
+  local s="$1"
+  s="${s//&/&amp;}"
+  s="${s//</&lt;}"
+  s="${s//>/&gt;}"
+  printf '%s' "$s"
+}
+
+render_schedule_html() {
+  cat <<HTML_HEAD
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Study Tracker - Philip Abbyad</title>
+<style>
+  :root {
+    --color-bg: #0c0c0c;
+    --color-text: #e8e8e8;
+    --color-text-dim: #888888;
+    --color-border: #2a2a2a;
+    --color-accent: #5f9ea0;
+    --color-open: #666666;
+    --color-done: #7fbf7f;
+    --color-ontime: #7fbf7f;
+    --color-early: #5f9ea0;
+    --color-late: #d9a441;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --max-width: 40rem;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); padding: 1.5rem; line-height: 1.6; }
+  main { max-width: var(--max-width); margin: 0 auto; }
+  h1 { font-family: var(--font-mono); font-size: 1.5rem; margin-bottom: 0.25rem; }
+  p.meta { color: var(--color-text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+  .day { margin-bottom: 1.75rem; }
+  .day-header { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem;
+                color: var(--color-text-dim); border-bottom: 1px solid var(--color-border); padding-bottom: 0.35rem; margin-bottom: 0.5rem; }
+  .item { font-family: var(--font-mono); font-size: 0.95rem; padding: 0.15rem 0; }
+  .item-open   { color: var(--color-open); }
+  .item-done   { color: var(--color-done); }
+  .item-ontime { color: var(--color-ontime); }
+  .item-early  { color: var(--color-early); }
+  .item-late   { color: var(--color-late); }
+  footer { margin-top: 2rem; color: var(--color-text-dim); font-size: 0.8rem; }
+  a { color: var(--color-accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Study Tracker</h1>
+  <p class="meta">Last updated: $(date '+%Y-%m-%d %H:%M %Z')</p>
+HTML_HEAD
+
+  local line day_open=0 state desc class
+  for line in "${LINES[@]}"; do
+    if [[ -z "$line" ]]; then
+      [[ $day_open -eq 1 ]] && echo "  </div>"
+      day_open=0
+      continue
+    fi
+    if [[ "$line" =~ $DAY_HEADER_RE ]]; then
+      [[ $day_open -eq 1 ]] && echo "  </div>"
+      echo "  <div class=\"day\">"
+      echo "    <div class=\"day-header\">$(html_escape "$line")</div>"
+      day_open=1
+      continue
+    fi
+    [[ $day_open -eq 1 ]] || continue
+    if [[ "$line" =~ ^\[([\ xX])\][[:space:]](.*)$ ]]; then
+      state="${BASH_REMATCH[1]}"
+      desc="${BASH_REMATCH[2]}"
+      if [[ "$state" == " " ]]; then
+        class=item-open
+      else
+        case "$desc" in
+          *"— completed on-time") class=item-ontime ;;
+          *"— completed late") class=item-late ;;
+          *"— completed early") class=item-early ;;
+          *) class=item-done ;;
+        esac
+      fi
+      echo "    <div class=\"item $class\">$(html_escape "$desc")</div>"
+    else
+      echo "    <div class=\"item\">$(html_escape "$line")</div>"
+    fi
+  done
+  [[ $day_open -eq 1 ]] && echo "  </div>"
+
+  cat <<'HTML_FOOT'
+  <footer>Generated automatically by study-log.sh</footer>
+</main>
+</body>
+</html>
+HTML_FOOT
+}
+
+publish_to_site() {
+  local site_dir="${STUDY_TRACKER_SITE_DIR:-$HOME/personal-website}"
+  local page_dir="$site_dir/study-tracker"
+  local page_file="$page_dir/index.html"
+
+  if [[ ! -d "$site_dir/.git" ]]; then
+    echo "Warning: site dir '$site_dir' is not a git repo; skipping site publish." >&2
+    return 0
+  fi
+
+  if ! mkdir -p "$page_dir" 2>/dev/null; then
+    echo "Warning: could not create '$page_dir'; skipping site publish." >&2
+    return 0
+  fi
+
+  if ! render_schedule_html > "$page_file.tmp" 2>/dev/null; then
+    echo "Warning: failed to render study-tracker page; skipping site publish." >&2
+    rm -f "$page_file.tmp"
+    return 0
+  fi
+  mv "$page_file.tmp" "$page_file"
+
+  (
+    cd "$site_dir" || exit 1
+    git add study-tracker/index.html || exit 1
+    if git diff --cached --quiet; then
+      exit 0
+    fi
+    git commit -q -m "Update study tracker page" || exit 1
+    git push -q || exit 1
+  ) || echo "Warning: failed to publish study-tracker page (git add/commit/push error). Local schedule log was still saved successfully; will retry on next run." >&2
+
+  return 0
+}
+
 TODAY_EPOCH=$(header_epoch "$TODAY_PATTERN")
 
 day_indices=()
@@ -264,6 +405,7 @@ if [[ $LOG_MODE -eq 1 ]]; then
     printf '%s\n' "${LINES[@]}" > "$FILE.tmp"
     mv "$FILE.tmp" "$FILE"
     echo "Saved $changed update(s) to $FILE"
+    publish_to_site
   else
     echo "No changes made."
   fi
