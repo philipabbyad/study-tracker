@@ -322,7 +322,7 @@ publish_to_site() {
     if git diff --cached --quiet; then
       exit 0
     fi
-    git commit -q -m "Update study tracker page" || exit 1
+    git commit -q -m "chore(study-tracker): sync published schedule page" || exit 1
     git push -q || exit 1
   ) || echo "Warning: failed to publish study-tracker page (git add/commit/push error). Local schedule log was still saved successfully; will retry on next run." >&2
 
