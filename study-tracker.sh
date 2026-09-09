@@ -180,15 +180,11 @@ build_upcoming() {
 }
 
 walk_upcoming() {
-  local first=1
   for idx in "${upcoming[@]}"; do
-    if [[ $first -eq 0 ]]; then
-      read -rp "Continue to $(header_label "${LINES[$idx]}")? [y/n]: " cont
-      if [[ "$cont" != "y" && "$cont" != "Y" ]]; then
-        break
-      fi
+    read -rp "Continue to $(header_label "${LINES[$idx]}")? [y/n]: " cont
+    if [[ "$cont" != "y" && "$cont" != "Y" ]]; then
+      break
     fi
-    first=0
     echo "  $(header_label "${LINES[$idx]}")"
     print_day_items "$idx"
     echo ""
