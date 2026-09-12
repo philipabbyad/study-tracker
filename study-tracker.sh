@@ -239,6 +239,7 @@ render_schedule_html() {
   .item-open   { color: var(--color-open); }
   .item-done   { color: var(--color-done); }
   .item-late   { color: var(--color-late); }
+  .item-note   { color: var(--color-text-dim); }
   footer { margin-top: 2rem; color: var(--color-text-dim); font-size: 0.8rem; }
   a { color: var(--color-accent); }
 </style>
@@ -281,7 +282,7 @@ HTML_HEAD
       fi
       echo "    <div class=\"item $class\">$(html_escape "$desc")</div>"
     else
-      echo "    <div class=\"item\">$(html_escape "$line")</div>"
+      echo "    <div class=\"item item-note\">$(html_escape "$line")</div>"
     fi
   done
   [[ $day_open -eq 1 ]] && echo "  </div>"
