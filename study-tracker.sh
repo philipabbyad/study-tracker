@@ -391,6 +391,14 @@ if [[ $LOG_MODE -eq 1 ]]; then
     fi
   fi
 
+  course_complete=1
+  for idx in "${day_indices[@]}"; do
+    if day_has_unfinished "$idx"; then
+      course_complete=0
+      break
+    fi
+  done
+
   if [[ $changed -gt 0 ]]; then
     for i in "${!LINES[@]}"; do
       if [[ "${LINES[$i]}" == "Last updated:"* ]]; then
@@ -402,6 +410,12 @@ if [[ $LOG_MODE -eq 1 ]]; then
     mv "$FILE.tmp" "$FILE"
     echo "Saved $changed update(s) to $FILE"
     publish_to_site
+    if [[ $course_complete -eq 1 && $QUIT -eq 0 ]]; then
+      echo ""
+      echo "All tasks complete. Nice work finishing the schedule!"
+    fi
+  elif [[ $course_complete -eq 1 && $QUIT -eq 0 ]]; then
+    echo "No tasks left. Nice work, the schedule is complete!"
   else
     echo "No changes made."
   fi
