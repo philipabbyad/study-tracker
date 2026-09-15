@@ -92,7 +92,7 @@ changes, no manual upkeep needed to keep that line trustworthy.
 **Logging ahead:** once today's entry has been handled (whether you
 logged items, skipped them, or it was already fully checked off), the
 script checks for unfinished (`[ ]`) items on any day *after* today. If
-there are none, it ends quietly. If there are, it walks through them one
+there are none, it walks through them one
 day at a time, oldest first, rather than dumping the whole list up front:
 useful on a schedule with weeks or months of upcoming days. It shows the
 next upcoming day's full item list (done and open both, so you can see
@@ -106,6 +106,13 @@ same as elsewhere. Completions are written back as
 `[x] <item> — completed early`, so you can tell at a glance (and later,
 when judging how well you planned your pace) which items were done ahead
 of schedule.
+
+**Schedule complete:** if that same check finds no unfinished items left
+anywhere in the whole schedule (not just today or upcoming), the run ends
+with a congratulatory line instead of the usual save summary: `All tasks
+complete. Nice work finishing the schedule!` if this run just logged the
+last of them, or `No tasks left. Nice work, the schedule is complete!` if
+everything was already checked off before the run started.
 
 ## Publishing a shareable snapshot
 
@@ -128,7 +135,10 @@ committed/pushed automatically; nothing is added to that repo's own nav
 or home page, so the resulting URL (e.g.
 `https://philipabbyad.com/study-tracker`) is link-only: reachable if you
 share it, not otherwise discoverable. `STUDY_TRACKER_COURSE_LABEL` is
-optional; leave it unset for a plain "Study Tracker" title.
+optional; leave it unset for a plain "Study Tracker" title. On the page,
+open items, on-time/early completions, and late completions each render
+in a distinct color, so a completed-late item is visible at a glance
+without reading its "— completed late" suffix.
 
 If publishing fails for any reason (not a git repo, offline, push
 rejected), it prints a warning and moves on: your local schedule save
