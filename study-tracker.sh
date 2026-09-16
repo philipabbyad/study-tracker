@@ -496,23 +496,18 @@ else
     fi
   done
 
-  echo "Today:"
-  if [[ $header_idx -eq -1 ]]; then
-    echo "  No entry for '$TODAY_PATTERN' in $FILE."
-  elif day_has_unfinished "$header_idx"; then
+  if [[ $header_idx -ne -1 ]] && day_has_unfinished "$header_idx"; then
+    echo "Today:"
     echo "  $(header_label "${LINES[$header_idx]}")"
     print_day_items "$header_idx"
   else
-    echo "  $(header_label "${LINES[$header_idx]}") — already fully logged."
-  fi
-  echo ""
-
-  build_upcoming
-  echo "Next up:"
-  if [[ ${#upcoming[@]} -gt 0 ]]; then
-    echo "  $(header_label "${LINES[${upcoming[0]}]}")"
-    print_day_items "${upcoming[0]}"
-  else
-    echo "  Nothing upcoming."
+    build_upcoming
+    echo "Next up:"
+    if [[ ${#upcoming[@]} -gt 0 ]]; then
+      echo "  $(header_label "${LINES[${upcoming[0]}]}")"
+      print_day_items "${upcoming[0]}"
+    else
+      echo "  Nothing upcoming."
+    fi
   fi
 fi
