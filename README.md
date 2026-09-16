@@ -31,14 +31,15 @@ It never prompts and never writes to the file. It shows:
   count plus the full day (every item, done and open both, not just
   what's left) for just the single oldest overdue day, to avoid a wall
   of text if you've fallen far behind.
-- **Today**: today's date header (matching `Weekday M/D`, e.g.
-  `Mon 8/24`) with the full day's items (done and open both), or
-  "already fully logged" if nothing's left, or "No entry for `<today>`"
-  if the schedule has no header for today at all.
-- **Next up**: the single nearest upcoming day that still has unfinished
-  items, with its full item list (done and open both, handy when
-  you've already knocked out a few of that day's items ahead of time),
-  or "Nothing upcoming."
+- **Today** *or* **Next up** (never both): if today's date header
+  (matching `Weekday M/D`, e.g. `Mon 8/24`) exists and still has
+  unfinished items, shows **Today** with the full day's items (done and
+  open both). Otherwise — today's fully logged, or there's no header for
+  today at all — shows **Next up**: the single nearest upcoming day
+  (however far off) that still has unfinished items, with its full item
+  list (done and open both, handy when you've already knocked out a few
+  of that day's items ahead of time), or "Nothing upcoming." Use `--date`
+  if you want to see multiple days at once.
 
 ### `--date`: peek at a specific day or range
 
