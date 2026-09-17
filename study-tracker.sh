@@ -240,6 +240,7 @@ render_schedule_html() {
   .item-done   { color: var(--color-done); }
   .item-late   { color: var(--color-late); }
   .item-note   { color: var(--color-text-dim); }
+  .tag { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85em; }
   footer { margin-top: 2rem; color: var(--color-text-dim); font-size: 0.8rem; }
   a { color: var(--color-accent); }
 </style>
@@ -272,15 +273,32 @@ HTML_HEAD
     if [[ "$line" =~ ^\[([\ xX])\][[:space:]](.*)$ ]]; then
       state="${BASH_REMATCH[1]}"
       desc="${BASH_REMATCH[2]}"
+      tag=""
+      if [[ "$desc" =~ ^\[([A-Za-z0-9_-]+)\][[:space:]]+(.*)$ ]]; then
+        tag="${BASH_REMATCH[1]}"
+        desc="${BASH_REMATCH[2]}"
+      fi
+      status=""
+      if [[ "$desc" =~ ^(.*)" — completed "(on-time|late|early)$ ]]; then
+        desc="${BASH_REMATCH[1]}"
+        status="${BASH_REMATCH[2]}"
+      fi
       if [[ "$state" == " " ]]; then
         class=item-open
+      elif [[ "$status" == "late" ]]; then
+        class=item-late
       else
-        case "$desc" in
-          *"— completed late") class=item-late ;;
-          *) class=item-done ;;
-        esac
+        class=item-done
       fi
-      echo "    <div class=\"item $class\">$(html_escape "$desc")</div>"
+      tag_html=""
+      if [[ -n "$tag" ]]; then
+        tag_html="<span class=\"tag\">$(html_escape "$tag")</span> "
+      fi
+      status_html=""
+      if [[ -n "$status" ]]; then
+        status_html=" <span class=\"sep\">·</span> $(html_escape "$status")"
+      fi
+      echo "    <div class=\"item $class\">${tag_html}$(html_escape "$desc")${status_html}</div>"
     else
       echo "    <div class=\"item item-note\">$(html_escape "$line")</div>"
     fi
