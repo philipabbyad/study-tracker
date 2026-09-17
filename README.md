@@ -17,6 +17,13 @@ See `example-schedule.txt` for a minimal example of the expected file
 format (day headers, `[x]`/`[ ]` items, completion suffixes, and the
 `Last updated:` line).
 
+An item can optionally start with a bracketed tag, e.g. `[D288] Part A:
+...` — useful for a schedule that interleaves more than one course/subject,
+since day headers can't be duplicated per calendar date, so items for
+different courses on the same day share one day block and are told apart
+by their tag. The tag is plain text to every mode except the published
+page (see below), where it gets its own styling.
+
 With no flags, it's read-only: a status snapshot printed to the terminal.
 It never prompts and never writes to the file. It shows:
 
@@ -136,10 +143,21 @@ committed/pushed automatically; nothing is added to that repo's own nav
 or home page, so the resulting URL (e.g.
 `https://philipabbyad.com/study-tracker`) is link-only: reachable if you
 share it, not otherwise discoverable. `STUDY_TRACKER_COURSE_LABEL` is
-optional; leave it unset for a plain "Study Tracker" title. On the page,
-open items, on-time/early completions, and late completions each render
-in a distinct color, so a completed-late item is visible at a glance
-without reading its "— completed late" suffix.
+optional; leave it unset for a plain "Study Tracker" title. For a schedule
+that interleaves multiple courses via tags (see above), a useful value is
+a key mapping each tag to its full name, e.g. `"D288: Back-End
+Programming · C958: Calculus Prep"`.
+
+On the page, open items, on-time/early completions, and late completions
+each render in a distinct color, so a completed-late item is visible at a
+glance. The completion suffix itself renders as `· late` / `· early` /
+`· on-time` — a separator plus the bare status word, not the full
+`— completed late` text — a display-only simplification; the `.txt` file
+itself still stores the full `— completed on-time` text unchanged, since
+that's what `--log` reads and writes. If an item starts with a bracketed
+tag, it renders as a small uppercase label ahead of the item text with no
+color of its own — it just takes on whatever color the rest of the line
+already has.
 
 If publishing fails for any reason (not a git repo, offline, push
 rejected), it prints a warning and moves on: your local schedule save
