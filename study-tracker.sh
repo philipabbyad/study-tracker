@@ -296,7 +296,7 @@ HTML_HEAD
       fi
       status_html=""
       if [[ -n "$status" ]]; then
-        status_html=" <span class=\"sep\">·</span> $(html_escape "$status")"
+        status_html=" <span class=\"sep\">·</span> completed $(html_escape "$status")"
       fi
       echo "    <div class=\"item $class\">${tag_html}$(html_escape "$desc")${status_html}</div>"
     else
