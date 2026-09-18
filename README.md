@@ -150,11 +150,10 @@ Programming · C958: Calculus Prep"`.
 
 On the page, open items, on-time/early completions, and late completions
 each render in a distinct color, so a completed-late item is visible at a
-glance. The completion suffix itself renders as `· late` / `· early` /
-`· on-time` — a separator plus the bare status word, not the full
-`— completed late` text — a display-only simplification; the `.txt` file
-itself still stores the full `— completed on-time` text unchanged, since
-that's what `--log` reads and writes. If an item starts with a bracketed
+glance. The completion suffix itself renders as `· completed late` /
+`· completed early` / `· completed on-time` — a separator plus the same
+wording the `.txt` file stores, just with the em dash swapped for the
+separator dot. If an item starts with a bracketed
 tag, it renders as a small uppercase label ahead of the item text with no
 color of its own — it just takes on whatever color the rest of the line
 already has.
