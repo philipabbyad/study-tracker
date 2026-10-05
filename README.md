@@ -163,17 +163,38 @@ already has.
 If publishing fails for any reason (`STUDY_TRACKER_SITE_DIR` unset, not
 a git repo, offline, push rejected), it prints a warning and moves on:
 your local schedule save already succeeded and is never rolled back or
-blocked by a publish failure.
+blocked by a publish failure. A `--log` run therefore still exits 0 even
+if its publish was skipped or failed — use `--publish` when you want the
+publish result itself to be the exit status.
+
+A publish that committed but failed to push (offline, for instance) is
+picked up and pushed by the next publish. It is only reported as "already
+up to date" when the page is genuinely on the remote, not merely
+committed locally.
 
 To publish manually (e.g. after a failed publish, or after editing the
-schedule file by hand), source the script in a subshell and call its
-publish function directly:
+schedule file by hand), use `--publish`:
 
 ```bash
-( source ./study-tracker.sh /path/to/schedule.txt > /dev/null; publish_to_site )
+./study-tracker.sh /path/to/schedule.txt --publish
 ```
 
-Sourcing with no flags runs the read-only snapshot (output discarded) and
-loads the script's functions; the surrounding `( ... )` keeps any `exit`
-from closing your terminal and leaves nothing behind in your shell. If
-the page hasn't changed since the last publish, no commit is made.
+It renders the page and publishes it, changing no completion status in
+the schedule file, and says what it did:
+
+```
+Published to /path/to/site-repo/study-tracker/index.html (commit ec5ab08)
+Published page already up to date: /path/to/site-repo/study-tracker/index.html
+```
+
+Its exit status reports the outcome, so it is safe to use from a script
+or a cron job:
+
+| Code | Meaning |
+|------|---------|
+| 0 | Published: committed and pushed |
+| 1 | Nothing to do: the page on the remote is already current |
+| 2 | Skipped: `STUDY_TRACKER_SITE_DIR` unset, or not a git repo |
+| 3 | Failed: render error, or a git add/commit/push error |
+
+`--publish` cannot be combined with `--log` or `--date`.
