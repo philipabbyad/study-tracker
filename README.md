@@ -17,7 +17,7 @@ See `example-schedule.txt` for a minimal example of the expected file
 format (day headers, `[x]`/`[ ]` items, completion suffixes, and the
 `Last updated:` line).
 
-An item can optionally start with a bracketed tag, e.g. `[D288] Part A:
+An item can optionally start with a bracketed tag, e.g. `[CS201] Part A:
 ...` — useful for a schedule that interleaves more than one course/subject,
 since day headers can't be duplicated per calendar date, so items for
 different courses on the same day share one day block and are told apart
@@ -132,21 +132,23 @@ check progress via a link instead of being sent the file directly.
 Configure it in `~/.study-trackerrc` (sourced automatically if present):
 
 ```bash
-STUDY_TRACKER_SITE_DIR="$HOME/personal-website"      # git repo to publish into (default shown)
+STUDY_TRACKER_SITE_DIR="$HOME/path/to/site-repo"    # git repo to publish into
 STUDY_TRACKER_COURSE_LABEL="Computer Architecture"   # optional subtitle on the page
 ```
 
-`STUDY_TRACKER_SITE_DIR` must be a git repo that already deploys on push
+`STUDY_TRACKER_SITE_DIR` is required for publishing (there's no default;
+if it's unset, publishing is skipped with a warning). It must be a git
+repo that already deploys on push
 (e.g. GitHub Pages, or any host wired to auto-deploy that repo's `main`
 branch). The page is written to `study-tracker/index.html` inside it and
 committed/pushed automatically; nothing is added to that repo's own nav
 or home page, so the resulting URL (e.g.
-`https://philipabbyad.com/study-tracker`) is link-only: reachable if you
+`https://example.com/study-tracker`) is link-only: reachable if you
 share it, not otherwise discoverable. `STUDY_TRACKER_COURSE_LABEL` is
 optional; leave it unset for a plain "Study Tracker" title. For a schedule
 that interleaves multiple courses via tags (see above), a useful value is
-a key mapping each tag to its full name, e.g. `"D288: Back-End
-Programming · C958: Calculus Prep"`.
+a key mapping each tag to its full name, e.g. `"CS201: Data Structures ·
+MATH101: Calculus"`.
 
 On the page, open items, on-time/early completions, and late completions
 each render in a distinct color, so a completed-late item is visible at a
@@ -158,7 +160,20 @@ tag, it renders as a small uppercase label ahead of the item text with no
 color of its own — it just takes on whatever color the rest of the line
 already has.
 
-If publishing fails for any reason (not a git repo, offline, push
-rejected), it prints a warning and moves on: your local schedule save
-already succeeded and is never rolled back or blocked by a publish
-failure.
+If publishing fails for any reason (`STUDY_TRACKER_SITE_DIR` unset, not
+a git repo, offline, push rejected), it prints a warning and moves on:
+your local schedule save already succeeded and is never rolled back or
+blocked by a publish failure.
+
+To publish manually (e.g. after a failed publish, or after editing the
+schedule file by hand), source the script in a subshell and call its
+publish function directly:
+
+```bash
+( source ./study-tracker.sh /path/to/schedule.txt > /dev/null; publish_to_site )
+```
+
+Sourcing with no flags runs the read-only snapshot (output discarded) and
+loads the script's functions; the surrounding `( ... )` keeps any `exit`
+from closing your terminal and leaves nothing behind in your shell. If
+the page hasn't changed since the last publish, no commit is made.
