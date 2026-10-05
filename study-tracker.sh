@@ -9,7 +9,7 @@ fi
 
 print_help() {
   cat <<'EOF'
-Usage: study-tracker.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]
+Usage: study-tracker.sh <path-to-schedule-file> [--log] [--publish] [--date <date>|<date> <date>|<N>]
 
 Modes:
   (no flags)            Read-only status snapshot: progress, pace
@@ -24,6 +24,13 @@ Modes:
   --date <N>            Snapshot the next N days starting today,
                         e.g. --date 7.
                         (--date cannot be combined with --log.)
+  --publish             Render the page and publish it to
+                        $STUDY_TRACKER_SITE_DIR, then exit with a
+                        meaningful status. Changes no completion status.
+                        Exit codes: 0 published, 1 already up to date,
+                        2 skipped (site dir unset/not a git repo),
+                        3 publish failed.
+                        (--publish cannot be combined with --log or --date.)
 
   -h, --help            Show this help and exit.
 
@@ -38,16 +45,18 @@ for arg in "$@"; do
   fi
 done
 
-FILE="${1:?Usage: study-tracker.sh <path-to-schedule-file> [--log] [--date <date>|<date> <date>|<N>]}"
+FILE="${1:?Usage: study-tracker.sh <path-to-schedule-file> [--log] [--publish] [--date <date>|<date> <date>|<N>]}"
 shift
 
 LOG_MODE=0
+PUBLISH_MODE=0
 DATE_MODE=0
 DATE_ARG1=""
 DATE_ARG2=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --log) LOG_MODE=1; shift ;;
+    --publish) PUBLISH_MODE=1; shift ;;
     --date)
       DATE_MODE=1
       DATE_ARG1="${2:?--date requires a date (e.g. 9/8), two dates for a range (e.g. 9/8 9/12), or a number of days (e.g. 7)}"
@@ -64,6 +73,11 @@ done
 
 if [[ $DATE_MODE -eq 1 && $LOG_MODE -eq 1 ]]; then
   echo "--date cannot be combined with --log" >&2
+  exit 1
+fi
+
+if [[ $PUBLISH_MODE -eq 1 && ( $LOG_MODE -eq 1 || $DATE_MODE -eq 1 ) ]]; then
+  echo "--publish cannot be combined with --log or --date" >&2
   exit 1
 fi
 
@@ -320,26 +334,27 @@ publish_to_site() {
 
   if [[ -z "$site_dir" ]]; then
     echo "Warning: STUDY_TRACKER_SITE_DIR is not set; skipping site publish." >&2
-    return 0
+    return 2
   fi
 
   if [[ ! -d "$site_dir/.git" ]]; then
     echo "Warning: site dir '$site_dir' is not a git repo; skipping site publish." >&2
-    return 0
+    return 2
   fi
 
   if ! mkdir -p "$page_dir" 2>/dev/null; then
     echo "Warning: could not create '$page_dir'; skipping site publish." >&2
-    return 0
+    return 2
   fi
 
   if ! render_schedule_html > "$page_file.tmp" 2>/dev/null; then
     echo "Warning: failed to render study-tracker page; skipping site publish." >&2
     rm -f "$page_file.tmp"
-    return 0
+    return 3
   fi
   mv "$page_file.tmp" "$page_file"
 
+  local git_rc=0
   (
     cd "$site_dir" || exit 1
     git add study-tracker/index.html || exit 1
@@ -350,12 +365,27 @@ publish_to_site() {
     # run may have committed but failed to push, which must still be retried.
     upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
     if [[ -n "$upstream" && -z "$(git rev-list "$upstream"..HEAD 2>/dev/null)" ]]; then
-      exit 0
+      exit 10
     fi
     git push -q || exit 1
-  ) || echo "Warning: failed to publish study-tracker page (git add/commit/push error). Local schedule log was still saved successfully; will retry on next run." >&2
+  ) || git_rc=$?
 
-  return 0
+  case $git_rc in
+    0)
+      local sha
+      sha=$(git -C "$site_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)
+      echo "Published to $page_file (commit $sha)"
+      return 0
+      ;;
+    10)
+      echo "Published page already up to date: $page_file"
+      return 1
+      ;;
+    *)
+      echo "Warning: failed to publish study-tracker page (git add/commit/push error). Local schedule log was still saved successfully; will retry on next run." >&2
+      return 3
+      ;;
+  esac
 }
 
 TODAY_EPOCH=$(header_epoch "$TODAY_PATTERN")
@@ -375,7 +405,11 @@ for idx in "${day_indices[@]}"; do
   fi
 done
 
-if [[ $LOG_MODE -eq 1 ]]; then
+if [[ $PUBLISH_MODE -eq 1 ]]; then
+  publish_rc=0
+  publish_to_site || publish_rc=$?
+  exit $publish_rc
+elif [[ $LOG_MODE -eq 1 ]]; then
   if [[ ${#missing[@]} -gt 0 ]]; then
     echo "You have ${#missing[@]} day(s) with unfinished items:"
     for idx in "${missing[@]}"; do
@@ -437,7 +471,9 @@ if [[ $LOG_MODE -eq 1 ]]; then
     printf '%s\n' "${LINES[@]}" > "$FILE.tmp"
     mv "$FILE.tmp" "$FILE"
     echo "Saved $changed update(s) to $FILE"
-    publish_to_site
+    # Tolerant by design: a publish problem must never fail the --log run or
+    # imply the local schedule save was lost. Use --publish for a real exit code.
+    publish_to_site || true
     if [[ $course_complete -eq 1 && $QUIT -eq 0 ]]; then
       echo ""
       echo "All tasks complete. Nice work finishing the schedule!"
