@@ -211,7 +211,7 @@ render_schedule_html() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>Study Tracker - Philip Abbyad</title>
+<title>Study Tracker</title>
 <style>
   :root {
     --color-bg: #0c0c0c;
@@ -314,9 +314,14 @@ HTML_FOOT
 }
 
 publish_to_site() {
-  local site_dir="${STUDY_TRACKER_SITE_DIR:-$HOME/personal-website}"
+  local site_dir="${STUDY_TRACKER_SITE_DIR:-}"
   local page_dir="$site_dir/study-tracker"
   local page_file="$page_dir/index.html"
+
+  if [[ -z "$site_dir" ]]; then
+    echo "Warning: STUDY_TRACKER_SITE_DIR is not set; skipping site publish." >&2
+    return 0
+  fi
 
   if [[ ! -d "$site_dir/.git" ]]; then
     echo "Warning: site dir '$site_dir' is not a git repo; skipping site publish." >&2
