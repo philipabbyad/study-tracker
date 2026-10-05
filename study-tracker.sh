@@ -343,10 +343,15 @@ publish_to_site() {
   (
     cd "$site_dir" || exit 1
     git add study-tracker/index.html || exit 1
-    if git diff --cached --quiet; then
+    if ! git diff --cached --quiet; then
+      git commit -q -m "chore(study-tracker): sync published schedule page" || exit 1
+    fi
+    # Only "up to date" if the page is also already on the remote. A previous
+    # run may have committed but failed to push, which must still be retried.
+    upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
+    if [[ -n "$upstream" && -z "$(git rev-list "$upstream"..HEAD 2>/dev/null)" ]]; then
       exit 0
     fi
-    git commit -q -m "chore(study-tracker): sync published schedule page" || exit 1
     git push -q || exit 1
   ) || echo "Warning: failed to publish study-tracker page (git add/commit/push error). Local schedule log was still saved successfully; will retry on next run." >&2
 
